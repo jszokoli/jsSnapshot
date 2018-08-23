@@ -1,1 +1,1 @@
-# jsSnapshot
+[Maya][Python] Node Graph Snapshoter
