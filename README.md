@@ -1,1 +1,1 @@
-[Maya][Python] Node Graph Snapshoter
+[Maya][Python] Node Graph Snapshot Tool
