@@ -1,33 +1,44 @@
-def buildAttrLibrary(sourceNode):
-    aiStandardAttrDict = {}
-    aiStandardAttrs = [sourceNode]
-    for i in aiStandardAttrs:
-        aroDict ={}
-        listAro = cmds.listAttr(i)
-        for attr in listAro:
-            if '.' in attr:
-                pass
+def buildAttrDictionary(sourceNode):
+    #Initialize Dictionary
+    attrDict ={}
+    #List all Attributes
+    listAttrs = cmds.listAttr(sourceNode)
+    for attr in listAttrs:
+        #Remove Compound Attribute Children
+        if '.' in attr:
+            pass
+        else:
+            #If a Compound Attribute
+            if cmds.attributeQuery(attr,node=sourceNode,at=1) == 'compound':
+                #Find Children Attr names
+                compoundChildren = cmds.attributeQuery(attr,node=sourceNode,lc=1)
+                #Find Children index 
+                numberChildren = cmds.getAttr(sourceNode+'.'+attr,mi=1)
+                for child in compoundChildren:    
+                    for x in numberChildren:
+                        connections=cmds.listConnections(sourceNode+'.'+attr+'['+str(x)+'].'+child,s=True,plugs=True)
+                        if connections:
+                            #If connections exist recieve connected node and attribute then store in dictionary
+                            attrVal=connections
+                            attrDict[attr+'['+str(x)+'].'+child] = attrVal
+                        else:
+                            #Query value of attribute and store in dictionary 
+                            attrVal = cmds.getAttr(sourceNode+'.'+attr+'['+str(x)+'].'+child)
+                            attrDict[attr+'['+str(x)+'].'+child] = attrVal
             else:
-                if cmds.attributeQuery(attr,node=i,at=1) == 'compound':
-                    compoundChildren = cmds.attributeQuery(attr,node=i,lc=1)
-                    numberChildren = cmds.getAttr(i+'.'+attr,mi=1)
-                    for child in compoundChildren:    
-                        for x in numberChildren:
-                            #cmds.getAttr(i+attr+'['+str(x)+'].'+child)
-                            connections=cmds.listConnections(i+'.'+attr+'['+str(x)+'].'+child,s=True,plugs=True)
-                            if connections:
-                                attrVal=connections
-                            else:
-                                attrVal = cmds.getAttr(i+'.'+attr+'['+str(x)+'].'+child)
-                                aroDict[attr+'['+str(x)+'].'+child] = attrVal
+                #Non-Compound Attributes
+                #Check if attribute has incoming connections
+                connections=cmds.listConnections(sourceNode+'.'+attr,s=True,plugs=True)
+                #If connections find and store node and attribute
+                if connections:
+                    attrVal=connections
+                    attrDict[attr] = attrVal
+                #Else query attribute value and store in dictionary
                 else:
-                    connections=cmds.listConnections(i+'.'+attr,s=True,plugs=True)
-                    if connections:
-                        attrVal=connections
-                    else:
-                        attrVal = cmds.getAttr(i +'.' +attr)
-                        aroDict[attr] = attrVal
-    
-        return aroDict
+                    attrVal = cmds.getAttr(sourceNode +'.' +attr)
+                    attrDict[attr] = attrVal
+    #Return Nodes Attribute dictionary
+    return attrDict
 
-print buildAttrLibrary('ramp1')
+
+
