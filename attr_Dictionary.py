@@ -1,8 +1,19 @@
-def buildAttrDictionary(sourceNode):
+def buildAttrDictionary(sourceNode,mode):
     #Initialize Dictionary
     attrDict ={}
-    #List all Attributes
-    listAttrs = cmds.listAttr(sourceNode)
+    listAttrs = []
+    if mode == "standard":
+        #List all Attributes
+        listAttrs = cmds.listAttr(sourceNode)        
+        #Remove any user created attrs
+        customAttrs = cmds.listAttr(sourceNode,ud=1)
+        for attr in customAttrs:
+            listAttrs.remove(attr)
+    elif mode == "custom":
+        listAttrs = cmds.listAttr(sourceNode,ud=1)
+    elif mode == "connection":
+        listAttrs = []
+    
     for attr in listAttrs:
         #Remove Compound Attribute Children
         if '.' in attr:
@@ -20,7 +31,7 @@ def buildAttrDictionary(sourceNode):
                         if connections:
                             #If connections exist recieve connected node and attribute then store in dictionary
                             attrVal=connections
-                            attrDict[attr+'['+str(x)+'].'+child] = attrVal
+                            #attrDict[attr+'['+str(x)+'].'+child] = attrVal
                         else:
                             #Query value of attribute and store in dictionary 
                             attrVal = cmds.getAttr(sourceNode+'.'+attr+'['+str(x)+'].'+child)
@@ -32,7 +43,7 @@ def buildAttrDictionary(sourceNode):
                 #If connections find and store node and attribute
                 if connections:
                     attrVal=connections
-                    attrDict[attr] = attrVal
+                    #attrDict[attr] = attrVal
                 #Else query attribute value and store in dictionary
                 else:
                     attrVal = cmds.getAttr(sourceNode +'.' +attr)
@@ -41,4 +52,17 @@ def buildAttrDictionary(sourceNode):
     return attrDict
 
 
+
+
+
+def restoreNodeFromDict(sourceNode,attrDict):
+    for attr,value in attrDict.iteritems():
+        print attr,value
+
+
+
+restoreNodeFromDict('ref_cool_RAMP',buildAttrDictionary('ref_cool_RAMP',"standard"))
+
+
+listAttrs = cmds.listAttr('ref_cool_RAMP')
 
