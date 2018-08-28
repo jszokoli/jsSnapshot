@@ -104,7 +104,7 @@ def buildAttrDictionary(sourceNode,mode):
 def restoreNodeFromDict(targetNode,attrDict):
     for attr,value in attrDict.iteritems():
         if '.' in attr:
-            attrType = 'compound'
+            attrType = 'TdataCompound'
         else:
             if cmds.attributeQuery(attr,node=targetNode,exists=1) == True:
                 attrType = cmds.getAttr(targetNode+'.'+attr,type=1)
@@ -129,25 +129,26 @@ def restoreNodeFromDict(targetNode,attrDict):
                 cmds.setAttr(targetNode+'.'+attr,value, type="string")
             else:
                 cmds.setAttr(targetNode+'.'+attr,'', type="string")
-'''                     
+                 
         elif attrType == 'TdataCompound':
+            print attr
             if isinstance(value, list) == True:
                 value = value[0]
                 cmds.setAttr(targetNode+'.'+attr,value[0],value[1],value[2],type="double3")
             else:
                 cmds.setAttr(targetNode+'.'+attr,value)
                 
-'''
 
 
-attrDict = buildAttrDictionary('ref_cool_RAMP1',"default")
-print attrDict
+
+#attrDict = buildAttrDictionary('ref_cool_RAMP1',"default")
+#print attrDict
 
 #attrDict = buildAttrDictionary('ref_cool_RAMP1',"default")
 
 
-restoreNodeFromDict('CYC_aiAreaLight_01_LGT1Shape',attrDict)
+restoreNodeFromDict('ref_cool_RAMP1',attrDict)
 #cmds.listAttr('CYC_aiAreaLight_01_LGT1Shape', hd=1,v=1)
 
 
-cmds.getAttr('ref_cool_RAMP1.colorEntryList',type=1)
+#cmds.getAttr('ref_cool_RAMP1.colorEntryList',type=1)
