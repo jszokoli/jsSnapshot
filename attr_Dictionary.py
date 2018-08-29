@@ -1,3 +1,4 @@
+import maya.cmds as cmds
 def buildAttrDictionary(sourceNode,mode):
     #Initialize Dictionary
     attrDict ={}
@@ -13,7 +14,7 @@ def buildAttrDictionary(sourceNode,mode):
                 listAttrs.append(attr)
                 
         #Remove any user created attrs
-        customAttrs = cmds.listAttr(sourceNode,ud=1)        
+        customAttrs = cmds.listAttr(sourceNode,ud=1) or []   
         for attr in customAttrs:
             listAttrs.remove(attr)
             
@@ -56,26 +57,28 @@ def buildAttrDictionary(sourceNode,mode):
         #If a Compound Attribute
         #if cmds.attributeQuery(attr,node=sourceNode,at=1) == 'compound':
         if cmds.getAttr(sourceNode+'.'+attr,type=1) == 'TdataCompound':
-            print attr
+            #print attr
             #Find Children Attr names
-            compoundChildren = cmds.attributeQuery(attr,node=sourceNode,lc=1)
+            compoundChildren = cmds.attributeQuery(attr,node=sourceNode,lc=1) or [attr]
+            
             #Find Children index 
             numberChildren = cmds.getAttr(sourceNode+'.'+attr,mi=1)
-            print attr, compoundChildren, numberChildren
+            #print attr, compoundChildren, numberChildren
             for child in compoundChildren:
-                print child
+                #print attr, compoundChildren, numberChildren
                 if numberChildren == None:
                     pass
                 else:
-                    connections=cmds.listConnections(sourceNode+'.'+attr+'['+str(x)+'].'+child,s=True,plugs=True)
-                    if connections:
-                        attrVal=connections
-                        attrDict[attr+'['+str(x)+'].'+child] = attrVal
-                    else:
-                        #Query value of attribute and store in dictionary 
-                        attrVal = cmds.getAttr(sourceNode+'.'+attr+'['+str(x)+'].'+child)
-                        attrDict[attr+'['+str(x)+'].'+child] = attrVal
-           
+                    for x in numberChildren:
+                        connections=cmds.listConnections(sourceNode+'.'+attr+'['+str(x)+'].'+child,s=True,plugs=True)
+                        if connections:
+                            attrVal=connections
+                            attrDict[attr+'['+str(x)+'].'+child] = attrVal
+                        else:
+                            #Query value of attribute and store in dictionary 
+                            attrVal = cmds.getAttr(sourceNode+'.'+attr+'['+str(x)+'].'+child)
+                            attrDict[attr+'['+str(x)+'].'+child] = attrVal
+               
                                         
         else:
             #Non-Compound Attributes
@@ -141,14 +144,10 @@ def restoreNodeFromDict(targetNode,attrDict):
 
 
 
-#attrDict = buildAttrDictionary('ref_cool_RAMP1',"default")
-#print attrDict
-
-#attrDict = buildAttrDictionary('ref_cool_RAMP1',"default")
 
 
-restoreNodeFromDict('ref_cool_RAMP1',attrDict)
-#cmds.listAttr('CYC_aiAreaLight_01_LGT1Shape', hd=1,v=1)
+attrDict = buildAttrDictionary('areaLightShape1',"default")
+print attrDict
 
+#restoreNodeFromDict('ramp1',attrDict)
 
-#cmds.getAttr('ref_cool_RAMP1.colorEntryList',type=1)
