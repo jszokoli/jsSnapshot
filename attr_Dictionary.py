@@ -1,5 +1,7 @@
 import maya.cmds as cmds
 
+
+
 def listAttrModes(sourceNode,mode):
     listAttrs = []
         
@@ -129,12 +131,11 @@ def buildAttrDictionary(sourceNode,mode):
         else:
             attrVal = cmds.getAttr(sourceNode +'.' +attr)
             attrDict[attr] = attrVal 
-
     #Return Nodes Attribute dictionary
     return attrDict
 
 
-def restoreNodeFromDict(targetNode,attrDict):
+def restoreAttributes(targetNode,attrDict):
     attrTypeList = []
     for attr,value in attrDict.iteritems():
         
@@ -177,14 +178,50 @@ def restoreNodeFromDict(targetNode,attrDict):
             cmds.setAttr(targetNode+'.'+attr,value, type="string")            
     #print attrTypeList                
 
-attrDict = buildAttrDictionary('ref_cool_RAMP2',"default")
-print attrDict
 
-#attrList = listAttrModes('ref_cool_RAMP2',"default")
-#print attrList
+def buildNodeDictionary(sourceNode,mode):
+    mayaVersion = cmds.about(version=True)
+    #Initialize Dictionaries
+    nodeDict ={}
+    nodeDescriptionDict = {}
+    #Build Descriptors
+    if int(mayaVersion) <= 2017:
+        sourceUUID = cmds.ls(sourceNode,uuid=True)[0]
+    else:
+        sourceUUID = None
+    sourceNodeType = cmds.nodeType(sourceNode)
+    if sourceNodeType == 'mesh':
+        attrDict = "BUILD MESH SUPPORT"
+    else:
+        attrDict = buildAttrDictionary(sourceNode,mode)
+    #Compile Dictionaries
+    nodeDescriptionDict['nodeType'] = sourceNodeType
+    nodeDescriptionDict['UUID'] = sourceUUID
+    nodeDescriptionDict['AttributeDictionary'] = attrDict
+    nodeDict[sourceNode] = nodeDescriptionDict
+    
+    return nodeDict
 
-restoreNodeFromDict('ref_cool_RAMP2',attrDict)
+
+def recreateNode(nodeDict):
+    #sourceNodeName, sourceNodeType, sourceUUID, attrDict
+    #Split dictionary into lists
+    for nodeName,nodeDescriptions in nodeDict.iteritems():
+        sourceNodeName = nodeName
+        for descriptor,value in nodeDescriptions.iteritems():
+            print descriptor,value
+            if 'nodeType' in descriptor:
+                sourceNodeType = value
+            elif 'UUID' in descriptor:
+                sourceUUID = value
+            elif 'AttributeDictionary' in descriptor:
+                attrDict = value
+    print sourceNodeName,sourceNodeType,sourceUUID,attrDict
+    #Temp New Node Function
+    newNode = cmds.shadingNode(sourceNodeType,name = sourceNodeName+'Recreated', asUtility=True)
+    restoreAttributes(newNode,attrDict)
 
 
-
+print buildNodeDictionary('ref_cool_RAMP2',"default")
+#recreateNode(buildNodeDictionary('ref_cool_RAMP2',"default"))
 
