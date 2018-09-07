@@ -278,5 +278,6 @@ def testRun(args=None):
     for node,dict in newNodes.iteritems():
         print node,dict
         restoreConnections(node, dict)
-
+    cmds.select(sel)
+###CHECK DIRECTION OF RECONNECTIONS
 testRun()
