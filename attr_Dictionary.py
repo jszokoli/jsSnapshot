@@ -125,7 +125,7 @@ def buildAttrDictionary(sourceNode,mode):
         connections=cmds.listConnections(sourceNode+'.'+attr,s=True,plugs=True)
         #If connections find and store node and attribute
         if connections:
-            attrVal=connections
+            attrVal=connections[0]
             attrDict[attr] = attrVal
         #Else query attribute value and store in dictionary
         else:
@@ -175,11 +175,16 @@ def restoreAttributes(targetNode,attrDict):
         elif attrType == 'string':
             if value == None:
                 value = ''
-            cmds.setAttr(targetNode+'.'+attr,value, type="string")            
+            try:
+                cmds.setAttr(targetNode+'.'+attr,value, type="string")
+            except:
+                pass          
     #print attrTypeList                
 
 
-def buildNodeDictionary(sourceNode,mode):
+
+
+def buildNodeDictionary(sourceNode):
     mayaVersion = cmds.about(version=True)
     #Initialize Dictionaries
     nodeDict ={}
@@ -193,11 +198,14 @@ def buildNodeDictionary(sourceNode,mode):
     if sourceNodeType == 'mesh':
         attrDict = "BUILD MESH SUPPORT"
     else:
-        attrDict = buildAttrDictionary(sourceNode,mode)
+        attrDict = buildAttrDictionary(sourceNode,"default")
+    connDict = buildAttrDictionary(sourceNode,"connection")
+    
     #Compile Dictionaries
     nodeDescriptionDict['nodeType'] = sourceNodeType
     nodeDescriptionDict['UUID'] = sourceUUID
     nodeDescriptionDict['AttributeDictionary'] = attrDict
+    nodeDescriptionDict['ConnectionDictionary'] = connDict
     nodeDict[sourceNode] = nodeDescriptionDict
     
     return nodeDict
@@ -209,19 +217,66 @@ def recreateNode(nodeDict):
     for nodeName,nodeDescriptions in nodeDict.iteritems():
         sourceNodeName = nodeName
         for descriptor,value in nodeDescriptions.iteritems():
-            print descriptor,value
+            #print descriptor,value
             if 'nodeType' in descriptor:
                 sourceNodeType = value
             elif 'UUID' in descriptor:
                 sourceUUID = value
             elif 'AttributeDictionary' in descriptor:
                 attrDict = value
-    print sourceNodeName,sourceNodeType,sourceUUID,attrDict
+            elif 'ConnectionDictionary' in descriptor:
+                connDict = value
+    #print sourceNodeName,sourceNodeType,sourceUUID,attrDict, connDict
     #Temp New Node Function
-    newNode = cmds.shadingNode(sourceNodeType,name = sourceNodeName+'Recreated', asUtility=True)
+    newNode = cmds.shadingNode(sourceNodeType,name = sourceNodeName, asUtility=True)
     restoreAttributes(newNode,attrDict)
+    return newNode
+
+def restoreConnections(targetNode,nodeDict):
+    #Testing
+    #connDict = nodeDict
+    
+    for nodeName,nodeDescriptions in nodeDict.iteritems():
+        for descriptor,value in nodeDescriptions.iteritems():
+            #print descriptor,value
+            if 'ConnectionDictionary' in descriptor:
+                connDict = value
+    print connDict
+    if connDict == {}:
+        pass
+    else:
+        for nodeIn,nodeOut in connDict.iteritems():
+            #print targetNode+'.'+nodeIn, nodeOut
+            #print nodeOut, targetNode+'.'+nodeIn
+            try:
+                try:
+                    cmds.connectAttr(nodeOut, targetNode+'.'+nodeIn, force=True)
+                except:
+                    cmds.connectAttr(targetNode+'.'+nodeIn, nodeOut, force=True)
+            except:
+                #cmds.warning( nodeOut +' and ' +targetNode+'.'+nodeIn +' already connected.' )
+                pass
 
 
-print buildNodeDictionary('ref_cool_RAMP2',"default")
-#recreateNode(buildNodeDictionary('ref_cool_RAMP2',"default"))
+#print buildNodeDictionary('ref_cool_RAMP2')
+#recreateNode(buildNodeDictionary('ref_cool_RAMP2'))
+#connDictTest = buildAttrDictionary('ref_cool_RAMP2',"connection")
+#restoreConnections('ref_cool_RAMP2', connDictTest)
 
+def testRun(args=None):
+    sel = cmds.ls(sl=1)
+    newNodes = {}
+    for i in sel:
+        nodeDict = []
+        nodeDict = buildNodeDictionary(i)
+        cmds.delete(i)
+        newNode = recreateNode(nodeDict)
+        print newNode
+        newNodes[newNode] = nodeDict
+    
+    print newNodes
+    for node,dict in newNodes.iteritems():
+        print node,dict
+        restoreConnections(node, dict)
+
+testRun()
