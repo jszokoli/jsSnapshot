@@ -1,7 +1,6 @@
 import maya.cmds as cmds
 
 
-
 def listAttrModes(sourceNode,mode):
     listAttrs = []
         
@@ -102,7 +101,7 @@ def listAttrModes(sourceNode,mode):
                     connections=cmds.listConnections(sourceNode+'.'+attr,s=True,plugs=True)
                     #If connections find and store node and attribute
                     if connections:
-                        print attr +' HAS INPUTS DAWG'
+                        #print attr +' HAS INPUTS DAWG'
                         pass
                     #Else query attribute value and store in dictionary
                     else:
@@ -133,6 +132,20 @@ def buildAttrDictionary(sourceNode,mode):
             attrDict[attr] = attrVal 
     #Return Nodes Attribute dictionary
     return attrDict
+
+def buildConnectionDictionary(sourceNode):
+    connectionDictionary = {}
+    #print sourceNode
+    listAttrs = listAttrModes(sourceNode,'connection')
+    #print sourceNode,listAttrs
+    for attr in listAttrs:
+        if cmds.connectionInfo(sourceNode+'.'+attr,isSource=True) == True:
+            targetConnections =  cmds.listConnections(sourceNode+'.'+attr,plugs=True)
+            #print sourceNode+'.'+attr, targetConnection
+            for connection in targetConnections:
+                connectionDictionary[sourceNode+'.'+attr] = connection
+    return connectionDictionary
+
 
 
 def restoreAttributes(targetNode,attrDict):
@@ -181,6 +194,35 @@ def restoreAttributes(targetNode,attrDict):
                 pass          
     #print attrTypeList                
 
+def queryClassType(sourceNodeType):
+    nodeClass =  cmds.getClassification(sourceNodeType)[0]
+    # SHADING GROUPS
+    if "shadingEngine" in nodeClass:
+        #print 'shadingEngine'
+        return 'shadingEngine'
+    #Textures
+    elif "texture/2d" in nodeClass or "texture/3d" in nodeClass or "texture/environment" in nodeClass:
+        #print "texture"
+        return 'texture'
+
+    #Shaders
+    elif "shader/surface" in nodeClass or "shader/surface" in nodeClass or "shader/displacement" in nodeClass:
+        #print 'shader'
+        return 'shader'
+
+    #Utilities
+    elif "utility/general" in nodeClass or "utility/color" in nodeClass or "utility/particle" in nodeClass:
+        #print 'utility'
+        return 'utility'
+
+    #Lights
+    elif "light" in nodeClass:
+        #print 'light'
+        return 'light'
+
+    else:
+        #print nodeClass
+        return 'nonHypershade'
 
 
 
@@ -199,15 +241,18 @@ def buildNodeDictionary(sourceNode):
         attrDict = "BUILD MESH SUPPORT"
     else:
         attrDict = buildAttrDictionary(sourceNode,"default")
-    connDict = buildAttrDictionary(sourceNode,"connection")
+
+    
+    classType = queryClassType(sourceNodeType)
+    connDict = buildConnectionDictionary(sourceNode)
     
     #Compile Dictionaries
     nodeDescriptionDict['nodeType'] = sourceNodeType
+    nodeDescriptionDict['nodeClassification'] = classType
     nodeDescriptionDict['UUID'] = sourceUUID
     nodeDescriptionDict['AttributeDictionary'] = attrDict
     nodeDescriptionDict['ConnectionDictionary'] = connDict
     nodeDict[sourceNode] = nodeDescriptionDict
-    
     return nodeDict
 
 
@@ -226,22 +271,50 @@ def recreateNode(nodeDict):
                 attrDict = value
             elif 'ConnectionDictionary' in descriptor:
                 connDict = value
+            elif 'nodeClassification' in descriptor:
+                nodeClassification = value
     #print sourceNodeName,sourceNodeType,sourceUUID,attrDict, connDict
+
+    if "shadingEngine" in nodeClassification:
+        newNode = cmds.sets(renderable= True, noSurfaceShader =True, empty = True, name = sourceNodeName)
+    #Textures
+    elif "texture" in nodeClassification:
+        newNode = cmds.shadingNode(sourceNodeType,name = sourceNodeName, asTexture=True)
+
+    #Shaders
+    elif "shader" in nodeClassification:
+        newNode = cmds.shadingNode(sourceNodeType,name = sourceNodeName, asShader=True)
+
+    #Utilities
+    elif "utility" in nodeClassification:
+        newNode = cmds.shadingNode(sourceNodeType,name = sourceNodeName, asUtility=True)
+
+    #Lights
+    elif "light" in nodeClassification:
+        newNode = cmds.shadingNode(sourceNodeType,name = sourceNodeName, asLight=True)
+
+    #Non-HyperShade Nodes
+    elif "nonHypershade" in nodeClassification:
+        cmds.createNode( sourceNodeType, n=sourceNodeName )
+
+    else:
+        cmds.createNode( sourceNodeType, n=sourceNodeName )
+
     #Temp New Node Function
-    newNode = cmds.shadingNode(sourceNodeType,name = sourceNodeName, asUtility=True)
+    #
     restoreAttributes(newNode,attrDict)
     return newNode
 
 def restoreConnections(targetNode,nodeDict):
     #Testing
     #connDict = nodeDict
-    
+    #print targetNode,nodeDict
     for nodeName,nodeDescriptions in nodeDict.iteritems():
         for descriptor,value in nodeDescriptions.iteritems():
             #print descriptor,value
             if 'ConnectionDictionary' in descriptor:
                 connDict = value
-    print connDict
+    #print connDict
     if connDict == {}:
         pass
     else:
@@ -249,12 +322,8 @@ def restoreConnections(targetNode,nodeDict):
             #print targetNode+'.'+nodeIn, nodeOut
             #print nodeOut, targetNode+'.'+nodeIn
             try:
-                try:
-                    cmds.connectAttr(nodeOut, targetNode+'.'+nodeIn, force=True)
-                except:
-                    cmds.connectAttr(targetNode+'.'+nodeIn, nodeOut, force=True)
+                cmds.connectAttr(nodeIn,nodeOut,force=True)
             except:
-                #cmds.warning( nodeOut +' and ' +targetNode+'.'+nodeIn +' already connected.' )
                 pass
 
 
@@ -263,21 +332,38 @@ def restoreConnections(targetNode,nodeDict):
 #connDictTest = buildAttrDictionary('ref_cool_RAMP2',"connection")
 #restoreConnections('ref_cool_RAMP2', connDictTest)
 
-def testRun(args=None):
+def testRun2(args=None):
     sel = cmds.ls(sl=1)
+    filterList = []
+    oldNodes = {}
     newNodes = {}
-    for i in sel:
-        nodeDict = []
+
+    for x in sel:
+        if cmds.nodeType(x) == 'shadingEngine':
+            pass
+        else:
+            filterList.append(x)
+    print filterList
+    for i in filterList:
+        print i
         nodeDict = buildNodeDictionary(i)
-        cmds.delete(i)
-        newNode = recreateNode(nodeDict)
-        print newNode
-        newNodes[newNode] = nodeDict
-    
-    print newNodes
-    for node,dict in newNodes.iteritems():
-        print node,dict
-        restoreConnections(node, dict)
+        print nodeDict
+        oldNodes[i] = nodeDict
+    cmds.delete(filterList)
+    print '~~~~~~~~~~~~~~~~~~~~~~~~~~~'
+    for node,newDict in oldNodes.iteritems():
+        newNode = recreateNode(newDict)
+        newNodes[newNode] = newDict
+
+    for node,newNodeDict in newNodes.iteritems():
+        restoreConnections(newNode, newNodeDict)
     cmds.select(sel)
-###CHECK DIRECTION OF RECONNECTIONS
-testRun()
+
+testRun2()
+
+#print buildNodeDictionary('test1')
+
+#print cmds.nodeType('aiStandardSurface1SG')
+
+###Create SG###
+# cmds.sets(renderable= True, noSurfaceShader =True, empty = True, name = "testSG")
