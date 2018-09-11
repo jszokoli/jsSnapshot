@@ -1,9 +1,11 @@
 import maya.cmds as cmds
+import time
+
 
 sel = cmds.ls(sl=1)
 
 
-def orderHeirarchy(sourceNodes):
+def topOfHeirarchy(sourceNodes):
     topNode = []
     #print sourceNodes
     for node in sourceNodes:
@@ -77,29 +79,73 @@ def allNodesHierarchy(sourceNode):
         nodeList.append(node)
     for node in downStream:
         nodeList.append(node)
-
+    nodeList.append(sourceNode)
     nodeList = filterMayaGlobals(nodeList)
-    return nodeList 
+
+    nodeListAddShape = []
+    for node in nodeList:
+        nodeShapes = cmds.listRelatives(node,s=True)
+        if nodeShapes == None:
+            nodeListAddShape.append(node)
+        else:
+            nodeListAddShape.append(node)
+            for shape in nodeShapes:
+                nodeListAddShape.append(shape)
+
+    return nodeListAddShape 
 
 
 def downStreamHierarchy(sourceNode):
     downStream = cmds.hyperShade(listDownstreamNodes=sourceNode)
+    downStream.append(sourceNode)
+    downStream = filterMayaGlobals(downStream)
     print downStream
 
 
 def upStreamHierarchy(sourceNode):
     upStream = cmds.hyperShade(listUpstreamNodes=sourceNode)
-    # print upStream
+    upStream.append(sourceNode)
     upStream = filterMayaGlobals(upStream)
     return upStream
 
 
 
-print allNodesHierarchy('aiMixShader1')
-print allNodesHierarchy('aiSkyDomeLight_01_LGTShape')
-print upStreamHierarchy('aiMixShader1')
-
 
 #snapshot
-# def snapShotNodeGraph(sourceNodes):
-#   print sourceNodes
+def snapShotNodeGraph(sourceNode):
+    time_start = time.clock()
+    #Finds all nodes in graph
+    anh = allNodesHierarchy(sourceNode)
+    #Finds top of heirarchy
+    topNodes = topOfHeirarchy(anh)
+
+    #Filters out top level nodes from general list
+    for topNode in topNodes:
+        anh.remove(topNode)
+
+    #General List
+    for node in anh:
+        print node
+        print buildNodeDictionary(node)
+
+    #Top Node List
+    for node in topNodes:
+        print node
+        print buildNodeDictionary(node)
+
+
+    time_elapsed = (time.clock() - time_start)
+    print 'Snapshot took '+ str(time_elapsed) + ' seconds to complete.'
+
+
+#snapShotNodeGraph(node)
+
+snapShotNodeGraph('aiSkyDomeLight_01_LGT')
+snapShotNodeGraph('aiMixShader1')
+#print allNodesHierarchy('aiSkyDomeLight_01_LGT')
+
+
+
+
+
+
