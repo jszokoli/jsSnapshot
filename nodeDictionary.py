@@ -144,6 +144,14 @@ def buildConnectionDictionary(sourceNode):
             #print sourceNode+'.'+attr, targetConnection
             for connection in targetConnections:
                 connectionDictionary[sourceNode+'.'+attr] = connection
+
+        #Destination Attrs
+        else:
+            targetConnections =  cmds.listConnections(sourceNode+'.'+attr,plugs=True)
+            #print sourceNode+'.'+attr, targetConnection
+            for connection in targetConnections:
+                connectionDictionary[connection] = sourceNode+'.'+attr
+
     return connectionDictionary
 
 
@@ -327,10 +335,6 @@ def restoreConnections(targetNode,nodeDict):
                 pass
 
 
-#print buildNodeDictionary('ref_cool_RAMP2')
-#recreateNode(buildNodeDictionary('ref_cool_RAMP2'))
-#connDictTest = buildAttrDictionary('ref_cool_RAMP2',"connection")
-#restoreConnections('ref_cool_RAMP2', connDictTest)
 
 def testRun2(args=None):
     sel = cmds.ls(sl=1)
@@ -359,11 +363,4 @@ def testRun2(args=None):
         restoreConnections(newNode, newNodeDict)
     cmds.select(sel)
 
-testRun2()
-
-#print buildNodeDictionary('test1')
-
-#print cmds.nodeType('aiStandardSurface1SG')
-
-###Create SG###
-# cmds.sets(renderable= True, noSurfaceShader =True, empty = True, name = "testSG")
+#testRun2()
