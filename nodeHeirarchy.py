@@ -4,6 +4,7 @@ sel = cmds.ls(sl=1)
 
 
 def orderHeirarchy(sourceNodes):
+    topNode = []
     #print sourceNodes
     for node in sourceNodes:
         listAttrs = listAttrModes(node,'connection')
@@ -14,10 +15,8 @@ def orderHeirarchy(sourceNodes):
                 amountCheck.append(attr)
                 #print node,attr
         if len(amountCheck) == 0:
-            print node
-
-#orderHeirarchy(sel)
-#print sel
+            topNode.append(node)
+    return topNode
 
 
 def testRun2(args=None):
@@ -48,7 +47,27 @@ def testRun2(args=None):
     cmds.select(sel)
 
 #testRun2()
-#print cmds.listConnections( sel[0])
+
+def filterMayaGlobals(sourceNodes):
+    forbiddenTypes = ['objectMultiFilter', 'objectRenderFilter', 'partition', 'aiAOVDriver',
+    'aiAOVFilter', 'aiOptions', 'colorManagementGlobals', 'hwRenderGlobals', 
+    'displayLayer', 'defaultLightList', 'objectSet', 'renderGlobals', 'renderLayer', 
+    'renderQuality', 'defaultRenderUtilityList', 'defaultRenderingList', 'resolution', 
+    'defaultShaderList', 'defaultTextureList', 'viewColorManager', 'dof', 'dynController',
+    'globalCacheControl', 'hardwareRenderGlobals', 'hardwareRenderingGlobals', 
+    'hikSolver', 'hyperGraphInfo', 'hyperLayout', 'ikRPsolver', 'ikSCsolver', 'ikSplineSolver', 
+    'ikSystem', 'materialInfo', 'displayLayerManager', 
+    'lightLinker', 'lightList', 'objectAttrFilter', 'objectNameFilter', 'objectScriptFilter', 
+    'objectTypeFilter', 'particleCloud', 'poseInterpolatorManager', 
+    'postProcessList', 'renderGlobalsList', 'renderLayerManager', 'selectionListOperator', 'sequenceManager', 
+    'shaderGlow', 'shapeEditorManager', 'strokeGlobals', 'time']
+
+    filteredList = []
+    for node in sourceNodes:
+        nTypes = cmds.nodeType(node)
+        if nTypes not in forbiddenTypes:
+            filteredList.append(node)
+    return filteredList
 
 def allNodesHierarchy(sourceNode):
     nodeList = []
@@ -58,31 +77,29 @@ def allNodesHierarchy(sourceNode):
         nodeList.append(node)
     for node in downStream:
         nodeList.append(node)
-    print nodeList 
+
+    nodeList = filterMayaGlobals(nodeList)
+    return nodeList 
 
 
 def downStreamHierarchy(sourceNode):
     downStream = cmds.hyperShade(listDownstreamNodes=sourceNode)
     print downStream
 
+
 def upStreamHierarchy(sourceNode):
     upStream = cmds.hyperShade(listUpstreamNodes=sourceNode)
-    print upStream
+    # print upStream
+    upStream = filterMayaGlobals(upStream)
+    return upStream
 
 
 
-downStreamHierarchy('aiMixShader1')
-allNodesHierarchy('aiMixShader1')
-
-# downStreamHierarchy('place2dTexture1')
-# allNodesHierarchy('place2dTexture1')
-
-# downStreamHierarchy('aiSkyDomeLight_01_LGTShape')
-# allNodesHierarchy('aiSkyDomeLight_01_LGTShape')
-
-
-print cmds.nodeType('defaultColorMgtGlobals')
+print allNodesHierarchy('aiMixShader1')
+print allNodesHierarchy('aiSkyDomeLight_01_LGTShape')
+print upStreamHierarchy('aiMixShader1')
 
 
 #snapshot
 # def snapShotNodeGraph(sourceNodes):
+#   print sourceNodes
