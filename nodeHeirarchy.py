@@ -2,7 +2,7 @@ import maya.cmds as cmds
 import time
 
 
-sel = cmds.ls(sl=1)
+#sel = cmds.ls(sl=1)
 
 
 def topOfHeirarchy(sourceNodes):
@@ -62,7 +62,7 @@ def filterMayaGlobals(sourceNodes):
     'lightLinker', 'lightList', 'objectAttrFilter', 'objectNameFilter', 'objectScriptFilter', 
     'objectTypeFilter', 'particleCloud', 'poseInterpolatorManager', 
     'postProcessList', 'renderGlobalsList', 'renderLayerManager', 'selectionListOperator', 'sequenceManager', 
-    'shaderGlow', 'shapeEditorManager', 'strokeGlobals', 'time']
+    'shaderGlow', 'shapeEditorManager', 'strokeGlobals', 'time','nodeGraphEditorInfo']
 
     filteredList = []
     for node in sourceNodes:
@@ -70,6 +70,7 @@ def filterMayaGlobals(sourceNodes):
         if nTypes not in forbiddenTypes:
             filteredList.append(node)
     return filteredList
+
 
 def allNodesHierarchy(sourceNode):
     nodeList = []
@@ -91,8 +92,17 @@ def allNodesHierarchy(sourceNode):
             nodeListAddShape.append(node)
             for shape in nodeShapes:
                 nodeListAddShape.append(shape)
+                upStreamShape = cmds.hyperShade(listUpstreamNodes=shape)
+                nodeListShape = filterMayaGlobals(upStreamShape)
+                for shapeChild in nodeListShape:
+                    nodeListAddShape.append(shapeChild)
 
     return nodeListAddShape 
+
+
+
+
+
 
 
 def downStreamHierarchy(sourceNode):
@@ -116,6 +126,7 @@ def snapShotNodeGraph(sourceNode):
     time_start = time.clock()
     #Finds all nodes in graph
     anh = allNodesHierarchy(sourceNode)
+    print anh
     #Finds top of heirarchy
     topNodes = topOfHeirarchy(anh)
 
@@ -125,12 +136,12 @@ def snapShotNodeGraph(sourceNode):
 
     #General List
     for node in anh:
-        print node
+        #print node
         print buildNodeDictionary(node)
 
     #Top Node List
     for node in topNodes:
-        print node
+        #print node
         print buildNodeDictionary(node)
 
 
@@ -143,7 +154,6 @@ def snapShotNodeGraph(sourceNode):
 snapShotNodeGraph('aiSkyDomeLight_01_LGT')
 snapShotNodeGraph('aiMixShader1')
 #print allNodesHierarchy('aiSkyDomeLight_01_LGT')
-
 
 
 
