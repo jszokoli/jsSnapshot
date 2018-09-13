@@ -21,35 +21,6 @@ def topOfHeirarchy(sourceNodes):
     return topNode
 
 
-def testRun2(args=None):
-    sel = cmds.ls(sl=1)
-    filterList = []
-    oldNodes = {}
-    newNodes = {}
-
-    for x in sel:
-        if cmds.nodeType(x) == 'shadingEngine':
-            pass
-        else:
-            filterList.append(x)
-    print filterList
-    for i in filterList:
-        print i
-        nodeDict = buildNodeDictionary(i)
-        print nodeDict
-        oldNodes[i] = nodeDict
-    cmds.delete(filterList)
-    print '~~~~~~~~~~~~~~~~~~~~~~~~~~~'
-    for node,newDict in oldNodes.iteritems():
-        newNode = recreateNode(newDict)
-        newNodes[newNode] = newDict
-
-    for node,newNodeDict in newNodes.iteritems():
-        restoreConnections(newNode, newNodeDict)
-    cmds.select(sel)
-
-#testRun2()
-
 def filterMayaGlobals(sourceNodes):
     forbiddenTypes = ['objectMultiFilter', 'objectRenderFilter', 'partition', 'aiAOVDriver',
     'aiAOVFilter', 'aiOptions', 'colorManagementGlobals', 'hwRenderGlobals', 
@@ -96,12 +67,7 @@ def allNodesHierarchy(sourceNode):
                 nodeListShape = filterMayaGlobals(upStreamShape)
                 for shapeChild in nodeListShape:
                     nodeListAddShape.append(shapeChild)
-
     return nodeListAddShape 
-
-
-
-
 
 
 
@@ -120,13 +86,11 @@ def upStreamHierarchy(sourceNode):
 
 
 
-
 #snapshot
 def snapShotNodeGraph(sourceNode):
     time_start = time.clock()
     #Finds all nodes in graph
     anh = allNodesHierarchy(sourceNode)
-    print anh
     #Finds top of heirarchy
     topNodes = topOfHeirarchy(anh)
 
@@ -149,10 +113,15 @@ def snapShotNodeGraph(sourceNode):
     print 'Snapshot took '+ str(time_elapsed) + ' seconds to complete.'
 
 
+
+
+
 #snapShotNodeGraph(node)
 
 snapShotNodeGraph('aiSkyDomeLight_01_LGT')
+print '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
 snapShotNodeGraph('aiMixShader1')
+print '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
 #print allNodesHierarchy('aiSkyDomeLight_01_LGT')
 
 
