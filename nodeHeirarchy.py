@@ -1,5 +1,6 @@
 import maya.cmds as cmds
 import time
+import datetime
 
 
 #sel = cmds.ls(sl=1)
@@ -94,18 +95,38 @@ def snapShotNodeGraph(sourceNode):
     #Finds top of heirarchy
     topNodes = topOfHeirarchy(anh)
 
+    '''
     #Filters out top level nodes from general list
     for topNode in topNodes:
         anh.remove(topNode)
+    '''
 
+    #confirmedTopNode = []
+    #Top Node List
+    if len(topNodes) > 1:
+        amountOfNodes = len(topNodes)
+        for node in topNodes:
+            findChildren = cmds.listRelatives(node,children=True)
+            if findChildren:
+                print 'THIS IS TOP NODE '+node
+                confirmedTopNode = node
+                #print buildNodeDictionary(node)
+            # else:
+            #     anh.append(node)
+    else:
+        for node in topNodes:
+            print 'THIS IS TOP NODE '+node
+            confirmedTopNode = node
+            # print buildNodeDictionary(node)
+
+    print confirmedTopNode
+
+
+
+    print 'THESE ARE THE NODES'
     #General List
     for node in anh:
-        #print node
-        print buildNodeDictionary(node)
-
-    #Top Node List
-    for node in topNodes:
-        #print node
+        # print node
         print buildNodeDictionary(node)
 
 
@@ -113,7 +134,7 @@ def snapShotNodeGraph(sourceNode):
     print 'Snapshot took '+ str(time_elapsed) + ' seconds to complete.'
 
 
-
+#print cmds.objectType( 'aiSkyDomeLight_01_LGTShape')
 
 
 #snapShotNodeGraph(node)
@@ -125,6 +146,5 @@ print '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
 #print allNodesHierarchy('aiSkyDomeLight_01_LGT')
 
 
-
-
+#print datetime.datetime.now().time()
 
