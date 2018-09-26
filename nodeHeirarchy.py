@@ -3,9 +3,6 @@ import time
 import datetime
 
 
-#sel = cmds.ls(sl=1)
-
-
 def topOfHeirarchy(sourceNodes):
     topNode = []
     #print sourceNodes
@@ -89,6 +86,8 @@ def upStreamHierarchy(sourceNode):
 
 #snapshot
 def snapShotNodeGraph(sourceNode):
+    graphDict = {}
+
     time_start = time.clock()
     #Finds all nodes in graph
     anh = allNodesHierarchy(sourceNode)
@@ -100,35 +99,49 @@ def snapShotNodeGraph(sourceNode):
     for topNode in topNodes:
         anh.remove(topNode)
     '''
-
-    #confirmedTopNode = []
+    # print len(topNodes)
+    # print topNodes
     #Top Node List
-    if len(topNodes) > 1:
+    if len(topNodes) >= 2:
+        possibleShapes = []
         amountOfNodes = len(topNodes)
         for node in topNodes:
             findChildren = cmds.listRelatives(node,children=True)
             if findChildren:
-                print 'THIS IS TOP NODE '+node
+                for nodeChild in findChildren:
+                    possibleShapes.append(nodeChild)
+                # print 'THIS IS TOP NODE '+node
                 confirmedTopNode = node
                 #print buildNodeDictionary(node)
-            # else:
-            #     anh.append(node)
+            else:
+                if node not in possibleShapes:
+                    # print 'THIS IS TOP NODE '+node
+                    confirmedTopNode = node
+                #anh.append(node)
     else:
         for node in topNodes:
-            print 'THIS IS TOP NODE '+node
+            # print 'THIS IS TOP NODE '+node
             confirmedTopNode = node
             # print buildNodeDictionary(node)
 
-    print confirmedTopNode
+    # print confirmedTopNode
 
 
 
-    print 'THESE ARE THE NODES'
+    # print 'THESE ARE THE NODES'
+    allChildrenDicts = []
     #General List
     for node in anh:
         # print node
-        print buildNodeDictionary(node)
+        # print buildNodeDictionary(node)
+        allChildrenDicts.append( buildNodeDictionary(node) )
 
+    # print allChildrenDicts
+
+    graphDict['ParentNode'] = confirmedTopNode
+    graphDict['NodeDictionaries'] = allChildrenDicts
+
+    return graphDict
 
     time_elapsed = (time.clock() - time_start)
     print 'Snapshot took '+ str(time_elapsed) + ' seconds to complete.'
@@ -139,9 +152,9 @@ def snapShotNodeGraph(sourceNode):
 
 #snapShotNodeGraph(node)
 
-snapShotNodeGraph('aiSkyDomeLight_01_LGT')
+print snapShotNodeGraph('aiSkyDomeLight_01_LGT')
 print '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
-snapShotNodeGraph('aiMixShader1')
+print snapShotNodeGraph('aiMixShader1')
 print '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
 #print allNodesHierarchy('aiSkyDomeLight_01_LGT')
 
