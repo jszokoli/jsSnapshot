@@ -22,3 +22,4 @@ with open('/net/homes/jszokoli/json/data.json') as json_data:
     convertedJsonData = json.load(json_data)
     print(convertedJsonData)
 
+print 'nodeDictionaryTest'
